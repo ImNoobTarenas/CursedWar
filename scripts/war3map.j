@@ -79,7 +79,7 @@ constant boolean LIBRARY_Group=true
 group bj_group
 constant boolean LIBRARY_HashLib=true
 constant boolean LIBRARY_InitLib=true
-string Version="v2.1.6g"
+string Version="v2.1.7a"
 integer stand_tree=10
 integer MaxHeroRes=3
 integer Rat_Limit=125
@@ -779,6 +779,7 @@ trigger gg_trg_Cam=null
 trigger gg_trg_Tooltip=null
 trigger gg_trg_ItemCollect=null
 trigger gg_trg___________________________u=null
+trigger gg_trg_Hat=null
 unit gg_unit_h001_0020=null
 unit gg_unit_h001_0017=null
 unit gg_unit_h001_0018=null
@@ -29857,7 +29858,7 @@ local group g=CreateGroup()
 local unit target
 local effect eff
 local real range=200.00+(200.00*lvl)
-local real dmg=200.00*lvl
+local real dmg=125.00*lvl
 local real HouseDamage=0.50
 call RangeEffect_start(caster,x,y,range,0.5)
 set eff=AddSpecialEffectTarget("Abilities\\Spells\\Orc\\WarStomp\\WarStompCaster.mdl",caster,"origin")
@@ -32150,6 +32151,34 @@ call TriggerRegisterAnyUnitEventBJ(gg_trg_Holodomor,EVENT_PLAYER_UNIT_DEATH)
 call TriggerAddCondition(gg_trg_Holodomor,Condition(function Holodomor_Conditions))
 call TriggerAddAction(gg_trg_Holodomor,function Holodomor_Actions)
 endfunction
+
+function Hat_Group takes nothing returns nothing
+    local unit p = GetEnumUnit()
+    call UnitRemoveAbility( p, 'A0HC' )
+    call UnitRemoveBuffBJ( 'B01T', p )
+    set p = null
+endfunction
+
+function Hat_Force takes nothing returns nothing
+    local player p = GetEnumPlayer()
+    call SetPlayerAbilityAvailable( p, 'A0HC', false )
+    set p = null
+endfunction
+
+function Hat takes nothing returns nothing
+    call ForForce( GetPlayersAll(), function Hat_Force )
+    call ForGroup( GetUnitsInRectAll(GetPlayableMapRect()), function Hat_Group)
+    call SetAbilityBaseRangeById( 'A0HC', 1, 1. )
+    call SetAbilityBaseAoEById( 'A0HC', 1, 1. )
+endfunction
+
+function InitTrig_Hat takes nothing returns nothing
+    set gg_trg_Hat = CreateTrigger(  )
+    call TriggerRegisterTimerEventSingle( gg_trg_Hat, 0.15 )
+    call TriggerAddAction( gg_trg_Hat, function Hat )
+endfunction
+
+
 function BurdenOfDarkness_Conditions takes nothing returns boolean
 local integer lvl=GetPlayerTechCount(GetOwningPlayer(GetTriggerUnit()),'R04U',true)
 return lvl>0 and not isUnitSummon(GetTriggerUnit())and isUnitEnemy(GetTriggerUnit(),GetKillingUnit())
@@ -34095,6 +34124,7 @@ call InitTrig_UnitDye()
 call InitTrig_Cam()
 call InitTrig_ItemCollect()
 call InitTrig___________________________u()
+call InitTrig_Hat()
 endfunction
 function RunInitializationTriggers takes nothing returns nothing
 call ConditionalTriggerExecute(gg_trg_SetupAchiv)
