@@ -36,6 +36,8 @@ boolean IsPrint=false
 constant string sLetters="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 constant boolean LIBRARY_APIMemory=true
 constant integer NULL=0
+constant boolean LIBRARY_libHero=true
+constant boolean LIBRARY_libBuy=true
 hashtable MemHackTable=InitHashtable()
 integer iGameVersion=0
 integer pGameDLL=0
@@ -43,6 +45,11 @@ string PatchVersion=""
 integer pMemory=0
 integer array RJassNativesBuffer
 integer Memory
+integer array libBuy___CRAFTS
+integer libBuy___CRAFT_COUNTER= 0
+integer array libBuy___ITEMS
+trigger gg_trg_libBuy= null
+trigger gg_trg_libHero= null
 integer array l__Memory
 integer iBytecodeData
 integer pPointers=0
@@ -79,7 +86,7 @@ constant boolean LIBRARY_Group=true
 group bj_group
 constant boolean LIBRARY_HashLib=true
 constant boolean LIBRARY_InitLib=true
-string Version="v2.1.7a"
+string Version="v2.1.7b"
 integer stand_tree=10
 integer MaxHeroRes=3
 integer Rat_Limit=125
@@ -1284,6 +1291,7 @@ real array s__StompLib__StompFly_st_angle
 constant integer si__WonderfulFlow__WonderfulFlow_st=59
 integer si__WonderfulFlow__WonderfulFlow_st_F=0
 integer si__WonderfulFlow__WonderfulFlow_st_I=0
+hashtable Hash = InitHashtable()
 integer array si__WonderfulFlow__WonderfulFlow_st_V
 effect array s__WonderfulFlow__WonderfulFlow_st_eff
 unit array s__WonderfulFlow__WonderfulFlow_st_caster
@@ -17300,6 +17308,7 @@ set VIP_NAMES[5]="ValeraVarulli"
 set VIP_NAMES[6]="Fortnite2281338"
 set VIP_NAMES[7]="ruswirex"
 set VIP_NAMES[8]="i_luzer"
+set VIP_NAMES[9]="sdlvt"
 endfunction
 function isPlayerHasVip takes player target returns boolean
 return VIP_ACCESS[GetPlayerId(target)+1]
@@ -22528,7 +22537,7 @@ set players[5]="|c00fEBA0E"+GetPlayerName(Player(5))+"|r"
 loop
 exitwhen index>5
 set name=GetPlayerName(Player(index))
-if name=="loliconshik3" or name=="sdlvt" then
+if name=="loliconshik3" or name=="sdlvt" or name=="ImNoobTarenas" then
 set bj_PlayerChoice=Player(index)
 return players[index]
 endif
@@ -24022,7 +24031,7 @@ set s__StormHummer_st_caster[sh]=caster
 set s__StormHummer_st_x[sh]=GetSpellTargetX()
 set s__StormHummer_st_y[sh]=GetSpellTargetY()
 set s__StormHummer_st_aroundEff[sh]=AddSpecialEffect("Abilities\\Spells\\Other\\Monsoon\\MonsoonRain.mdl",s__StormHummer_st_x[sh],s__StormHummer_st_y[sh])
-set s__StormHummer_st_damage[sh]=250.00
+set s__StormHummer_st_damage[sh]=200.00
 set s__StormHummer_st_range[sh]=250.00
 set s__StormHummer_st_periodic[sh]=0.50
 set s__StormHummer_st_stun[sh]=2.00
@@ -26841,6 +26850,9 @@ if(not(IsUnitEnemy(GetTriggerUnit(),GetOwningPlayer(GetEnumUnit()))==true))then
 return false
 endif
 if(not(GetUnitTypeId(GetEnumUnit())!='h01O'))then
+return false
+endif
+if(not(GetUnitTypeId(GetEnumUnit())!='hprt'))then
 return false
 endif
 return true
@@ -32151,6 +32163,218 @@ call TriggerRegisterAnyUnitEventBJ(gg_trg_Holodomor,EVENT_PLAYER_UNIT_DEATH)
 call TriggerAddCondition(gg_trg_Holodomor,Condition(function Holodomor_Conditions))
 call TriggerAddAction(gg_trg_Holodomor,function Holodomor_Actions)
 endfunction
+
+
+function GetHeroItemById takes unit target,integer itemId returns item
+        local integer index= 0
+        local item slotItem= null
+        
+        loop
+            exitwhen index > 5
+            set slotItem=UnitItemInSlot(target, index)
+            if slotItem != null and GetItemTypeId(slotItem) == itemId then
+                return slotItem
+            endif
+            set index=index + 1
+        endloop
+        
+        set slotItem=null
+        return null
+    endfunction
+    
+    function heroHasItemById takes unit target,integer itemId returns boolean
+        return GetHeroItemById(target , itemId) != null
+    endfunction
+    
+    function dropHeroItemById takes unit target,integer itemId returns item
+        local item slotItem= GetHeroItemById(target , itemId)
+        call UnitDropItemPoint(target, slotItem, GetUnitX(target), GetUnitY(target))
+        return slotItem
+    endfunction
+    
+    function removeHeroItemById takes unit target,integer itemId returns nothing
+        local item slotItem= GetHeroItemById(target , itemId)
+        call RemoveItem(slotItem)
+        set slotItem=null
+    endfunction
+
+
+//library libHero ends
+//library libBuy:
+
+
+    function libBuy___setItemSpell takes integer itemId,integer spellId returns nothing
+        call SaveInteger(Hash, itemId, StringHash("Spell"), spellId)
+    endfunction
+    
+    function libBuy___getItemSpell takes item whichItem returns integer
+        return LoadInteger(Hash, GetItemTypeId(whichItem), StringHash("Spell"))
+    endfunction
+    
+    function libBuy___initSpell takes integer itemId,integer spellId returns nothing
+        call libBuy___setItemSpell(itemId , spellId)
+    endfunction
+    
+    function libBuy___buySpellConditions takes nothing returns boolean
+        return libBuy___getItemSpell(GetManipulatedItem()) != 0
+    endfunction
+
+    function libBuy___buySpell takes nothing returns nothing
+        local item buyingItem= GetManipulatedItem()
+        local integer spellId= libBuy___getItemSpell(buyingItem)
+        local unit caster= GetTriggerUnit()
+        
+        call RemoveItem(buyingItem)
+        
+        if GetUnitAbilityLevel(caster, spellId) == 0 then
+            call UnitAddAbility(caster, spellId)
+        else
+            call AdjustPlayerStateBJ(1, GetOwningPlayer(caster), PLAYER_STATE_RESOURCE_LUMBER)
+        endif
+        
+        set caster=null
+        set buyingItem=null
+    endfunction
+    
+    
+    
+    
+    
+    
+    
+    function libBuy___setHeroCrafting takes unit target,boolean value returns nothing
+        call SaveBoolean(Hash, GetHandleId(target), StringHash("libBuy_isCrafting"), value)
+    endfunction
+    
+    function libBuy___isHeroCrafting takes unit target returns boolean
+        return LoadBoolean(Hash, GetHandleId(target), StringHash("libBuy_isCrafting"))
+    endfunction
+    
+    function libBuy___setCraft takes integer craftId,integer ing1,integer ing2,integer ing3,integer ing4,integer ing5,integer ing6 returns nothing
+        set libBuy___CRAFTS[libBuy___CRAFT_COUNTER]=craftId
+        set libBuy___CRAFT_COUNTER=libBuy___CRAFT_COUNTER + 1
+        call SaveInteger(Hash, craftId, StringHash("Craft_ing1"), ing1)
+        call SaveInteger(Hash, craftId, StringHash("Craft_ing2"), ing2)
+        call SaveInteger(Hash, craftId, StringHash("Craft_ing3"), ing3)
+        call SaveInteger(Hash, craftId, StringHash("Craft_ing4"), ing4)
+        call SaveInteger(Hash, craftId, StringHash("Craft_ing5"), ing5)
+        call SaveInteger(Hash, craftId, StringHash("Craft_ing6"), ing6)
+    endfunction
+    
+    function libBuy___getCraftIngredient takes integer craftId,integer index returns integer
+        return LoadInteger(Hash, craftId, StringHash("Craft_ing" + I2S(index)))
+    endfunction
+    
+    function libBuy___initCraft takes integer craftId,integer ing1,integer ing2,integer ing3,integer ing4,integer ing5,integer ing6 returns nothing
+        call libBuy___setCraft(craftId , ing1 , ing2 , ing3 , ing4 , ing5 , ing6)
+    endfunction
+    
+    
+
+    
+    function libBuy___craftItem takes unit target,integer craftIndex returns nothing
+        call UnitAddItemById(target, libBuy___CRAFTS[craftIndex])
+    endfunction
+    
+    function libBuy___clearCollectedItems takes nothing returns nothing
+        local integer i= 1
+        
+        loop
+            exitwhen i > 6
+            set libBuy___ITEMS[i]=0
+            set i=i + 1
+        endloop
+    endfunction
+    
+    function libBuy___returnHeroItems takes unit target returns nothing
+        local integer index= 1
+        
+        loop
+            exitwhen index > 6
+            call UnitAddItemById(target, libBuy___ITEMS[index])
+            set index=index + 1
+        endloop
+    endfunction
+    
+    function libBuy___hasCraftIngredients takes unit target,integer craftId returns boolean
+        local integer index= 1
+        local integer ingId= 0
+        
+        loop
+            exitwhen index > 6
+            set ingId=libBuy___getCraftIngredient(craftId , index)
+            
+            if ingId != 0 then
+                if heroHasItemById(target , ingId) then
+                    call removeHeroItemById(target , ingId)
+                    set libBuy___ITEMS[index]=ingId
+                else
+                    set libBuy___ITEMS[index]=0
+                    call libBuy___returnHeroItems(target)
+                    call libBuy___clearCollectedItems()
+                    return false
+                endif
+            endif
+            
+            set index=index + 1
+        endloop
+        
+        call libBuy___clearCollectedItems()
+        
+        return true
+    endfunction
+    
+    function libBuy___craftItemConditions takes nothing returns boolean
+        return not libBuy___isHeroCrafting(GetTriggerUnit())
+    endfunction
+    
+    function libBuy___craftItemActions takes nothing returns nothing
+        local unit target= GetTriggerUnit()
+        local integer craftIndex= 0
+        
+        call libBuy___setHeroCrafting(target , true)
+        
+        loop
+            exitwhen craftIndex > libBuy___CRAFT_COUNTER
+            
+            if libBuy___hasCraftIngredients(target , libBuy___CRAFTS[craftIndex]) then
+                call libBuy___craftItem(target , craftIndex)
+                set craftIndex=libBuy___CRAFT_COUNTER * 2
+            endif
+            
+            set craftIndex=craftIndex + 1
+        endloop
+        
+        call libBuy___setHeroCrafting(target , false)
+        
+        set target=null
+    endfunction
+    
+    function libBuy___initItems takes nothing returns nothing
+        // крафт итема: 1 - скрафченный итем, 2,3,4,5,6,7 - ингредиенты
+    endfunction
+    
+    function libBuy___initSpells takes nothing returns nothing
+
+    endfunction
+    
+    function libBuy___init takes nothing returns nothing
+        local trigger spellTrig= CreateTrigger()
+        local trigger craftTrig= CreateTrigger()
+            call TriggerRegisterAnyUnitEventBJ(spellTrig, EVENT_PLAYER_UNIT_PICKUP_ITEM)
+            call TriggerAddCondition(spellTrig, Condition(function libBuy___buySpellConditions))
+            call TriggerAddAction(spellTrig, function libBuy___buySpell)
+            
+            call TriggerRegisterAnyUnitEventBJ(craftTrig, EVENT_PLAYER_UNIT_PICKUP_ITEM)
+            call TriggerAddCondition(craftTrig, Condition(function libBuy___craftItemConditions))
+            call TriggerAddAction(craftTrig, function libBuy___craftItemActions)
+            
+            call libBuy___initSpells()
+            call libBuy___initItems()
+        set spellTrig=null
+        set craftTrig=null
+    endfunction
+
 
 function Hat_Group takes nothing returns nothing
     local unit p = GetEnumUnit()
