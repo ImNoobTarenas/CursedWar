@@ -190,7 +190,7 @@ string array VIP_NAMES
 constant boolean LIBRARY_EndLib=true
 constant boolean LIBRARY_HeroRespawnLib=true
 constant boolean LIBRARY_MagicWand=true
-real MagicWand__PERIODIC=1.00
+real MagicWand__PERIODIC=1.25
 real MagicWand__DMG_RANGE=0.00
 real MagicWand__DAMAGE=20.00
 real MagicWand__RANGE=700.00
@@ -17763,7 +17763,7 @@ set s__MagicWand__MagicWandProjectile_st_targetY[mwp]=GetUnitY(target)
 set s__MagicWand__MagicWandProjectile_st_angle[mwp]=PointsAngle(x,y,s__MagicWand__MagicWandProjectile_st_targetX[mwp],s__MagicWand__MagicWandProjectile_st_targetY[mwp])
 set s__MagicWand__MagicWandProjectile_st_distance[mwp]=PointsDistance(x,y,s__MagicWand__MagicWandProjectile_st_targetX[mwp],s__MagicWand__MagicWandProjectile_st_targetY[mwp])
 if isCollected then
-set s__MagicWand__MagicWand_st_periodic[mw]=0.6
+set s__MagicWand__MagicWand_st_periodic[mw]=0.75
 set s__MagicWand__MagicWandProjectile_st_damage[mwp]=30.00
 set s__MagicWand__MagicWandProjectile_st_dmgRange[mwp]=200.00
 endif
@@ -17830,10 +17830,10 @@ if GetUnitItemCountById(s__MagicWand__MagicWand_st_caster[mw],'I02G')>0 or isCol
 set s__MagicWand__MagicWand_st_isNecro[mw]=true
 endif
 if GetUnitItemCountById(s__MagicWand__MagicWand_st_caster[mw],'I02H')>0 or isCollected then
-set s__MagicWand__MagicWand_st_periodic[mw]=0.75
+set s__MagicWand__MagicWand_st_periodic[mw]=1.
 endif
 if s__MagicWand__MagicWand_st_isCollected[mw]then
-set s__MagicWand__MagicWand_st_periodic[mw]=0.6
+set s__MagicWand__MagicWand_st_periodic[mw]=0.75
 set s__MagicWand__MagicWand_st_damage[mw]=30.00
 set s__MagicWand__MagicWand_st_dmgRange[mw]=200.00
 endif
